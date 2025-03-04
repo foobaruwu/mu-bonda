@@ -11,7 +11,9 @@ typedef struct{
 void kv_init();
 
 void kv_put(unsigned int key,unsigned int value, unsigned int is_signed);
-int kv_get(unsigned int key, unsigned int* value, unsigned int* is_signed);
+int kv_get(unsigned int key,unsigned int* value, unsigned int* is_signed);
+void kv_delete(unsigned int key);
+void kv_print_log();
 
 
 
