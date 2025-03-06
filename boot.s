@@ -1,7 +1,7 @@
 .global _start
 .section .text
 _start:
-    msr DAIFSet, #0xf ; Disable Interrupts
+    msr DAIFSet, #0xf 
 
     mov sp, #0x80000
     bl kernel_main
