@@ -1,7 +1,7 @@
 #ifndef UART_H
 #define UART_H
 
-#define UART0_BASE 0x40030000
+#define UART0_BASE 0x1f00030000
 #define UART0_DR                                                               \
   (*(volatile unsigned int *)(UART0_BASE + 0x00)) // data
                                                   // register
