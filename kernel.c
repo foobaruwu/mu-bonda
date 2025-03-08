@@ -6,50 +6,54 @@ int parse_input(const char *str, unsigned int *key, unsigned int *value,
                 unsigned int *is_signed);
 void kernel_main() {
   // uart_init();
-  // kv_init();
-  // uart_puts("KVSTORE INIT\n");
+  kv_init();
+  uart_puts("KVSTORE INIT\r\n");
 
-  // char buf[128];
+  char buf[128];
 
   while (1) {
-    uart_putc('A');
-    //   uart_puts("\n> ");
-    //   uart_gets(buf, 128);
-    //   if (buf[0] == 'p' && buf[1] == 'u' && buf[2] == 't') {
-    //     unsigned int key, value, is_signed = 0;
-    //     if (parse_input(buf + 3, &key, &value, &is_signed)) {
-    //       kv_put(key, value, is_signed);
-    //     } else {
-    //       uart_puts("INVALID INPUT\n");
-    //     }
-    //   } else if (buf[0] == 'g' && buf[1] == 'e' && buf[2] == 't') {
-    //     unsigned int key, value, is_signed = 0;
-    //     if (parse_key(buf + 3, &key)) {
-    //       if (kv_get(key, &value, &is_signed) == 0) {
-    //         uart_puts("VALUE: ");
-    //         if (is_signed) {
-    //           uart_puts("-");
-    //           int complement = ~value | 1;
-    //           uart_ascii_signed(complement, buf);
-    //           uart_puts(buf);
-    //         } else {
-    //           uart_ascii(value, buf);
-    //           uart_puts(buf);
-    //         }
-    //         uart_puts("\n");
-    //       } else {
-    //         uart_puts("KEY NOT FOUND\n");
-    //       }
-    //     }
-    //   } else if (buf[0] == 'd' && buf[1] == 'e' && buf[2] == 'l') {
-    //     unsigned int key;
-    //     if (parse_key(buf + 3, &key)) {
-    //       kv_delete(key);
-    //       uart_puts("KEY DELETED\n");
-    //     } else {
-    //       uart_puts("INVALID INPUT\n");
-    //     }
-    //   }
+    uart_puts("\r\n>");
+    uart_gets(buf, 128);
+
+    // uart_puts("\r\nrecv: ");
+    // uart_puts(buf);
+    // uart_puts("\r\n");
+
+    if (buf[0] == 'p' && buf[1] == 'u' && buf[2] == 't') {
+      unsigned int key, value, is_signed = 0;
+      if (parse_input(buf + 3, &key, &value, &is_signed)) {
+        kv_put(key, value, is_signed);
+      } else {
+        uart_puts("\r\nINVALID INPUT\r\n");
+      }
+    } else if (buf[0] == 'g' && buf[1] == 'e' && buf[2] == 't') {
+      unsigned int key, value, is_signed = 0;
+      if (parse_key(buf + 3, &key)) {
+        if (kv_get(key, &value, &is_signed) == 0) {
+          uart_puts("\r\nVALUE: ");
+          if (is_signed) {
+            uart_puts("-");
+            int complement = ~value | 1;
+            uart_ascii_signed(complement, buf);
+            uart_puts(buf);
+          } else {
+            uart_ascii(value, buf);
+            uart_puts(buf);
+          }
+          uart_puts("\r\n");
+        } else {
+          uart_puts("\r\nKEY NOT FOUND\r\n");
+        }
+      }
+    } else if (buf[0] == 'd' && buf[1] == 'e' && buf[2] == 'l') {
+      unsigned int key;
+      if (parse_key(buf + 3, &key)) {
+        kv_delete(key);
+        uart_puts("\r\nKEY DELETED\r\n");
+      } else {
+        uart_puts("\r\nINVALID INPUT\r\n");
+      }
+    }
   }
 }
 

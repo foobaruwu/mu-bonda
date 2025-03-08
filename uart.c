@@ -1,29 +1,16 @@
 #include "uart.h"
-
-void uart_init() {
-  // disable uart0 before config
-  UART0_CR = 0x0;
-  // IBRD AND FBRD VALUES FOR 115200
-  UART0_IBRD = 26;
-  UART0_FBRD = 3;
-  // 4th bit is set to 1 for FIFO, 5:6 bits are set to 11 for 8 bit word length
-  UART0_LCRH = (1 << 4) | (3 << 5);
-  // enable uart0, tx and rx
-  UART0_CR = (1 << 0) | (1 << 8) | (1 << 9);
-}
+#include "io.h"
 
 void uart_putc(char c) {
-  // wait until tx buffer is empty
-  while (UART0_FR & (1 << 5))
+  while (MMIO_REG(UART0_FR) & FR_TXFF)
     ;
-
-  UART0_DR = c;
+  MMIO_REG(UART0_DR) = c;
 }
 
 char uart_getc() {
-  while (UART0_FR & (1 << 4))
+  while (MMIO_REG(UART0_FR) & FR_RXFE)
     ;
-  return UART0_DR;
+  return MMIO_REG(UART0_DR);
 }
 
 void uart_puts(const char *s) {

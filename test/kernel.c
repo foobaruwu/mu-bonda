@@ -31,7 +31,18 @@ char uart_getc() {
 }
 
 void kernel_main() {
+  char c;
+  uart_putc('m');
+  uart_putc('u');
+  uart_putc('b');
+  uart_putc('o');
+  uart_putc('n');
+  uart_putc('d');
+  uart_putc('a');
+  uart_putc('\n');
+
   while (1) {
-    uart_putc('A');
+    c = uart_getc();
+    uart_putc(c);
   }
 }
