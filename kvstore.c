@@ -48,3 +48,56 @@ int kv_delete(unsigned int key) {
   uart_puts("KVSTORE DELETE\n");
   return 0;
 }
+
+int kv_print_log() {
+  char buf[32];
+  
+  if (kv_index == 0) {
+      uart_puts("KVSTORE EMPTY\r\n");
+      return -1;
+  }
+  
+  uart_puts("KVSTORE LOG:\r\n");
+  uart_puts("------------\r\n");
+  
+  for (int i = 0; i < kv_index; i++) {
+      unsigned long long entry = kv_log[i].data;
+      unsigned int key = entry & 0x7FFFFFFF;
+      unsigned int value = (entry >> 31) & 0x7FFFFFFF;
+      unsigned int is_signed = (entry >> 63) & 0x1;
+      unsigned int is_deleted = (entry >> 62) & 0x1;
+      
+      uart_puts("Entry [");
+      uart_ascii(i, buf);
+      uart_puts(buf);
+      uart_puts("]: ");
+      
+      uart_puts("Key=");
+      uart_ascii(key, buf);
+      uart_puts(buf);
+      
+      if (is_deleted) {
+          uart_puts(" (DELETED)\r\n");
+      } else {
+          uart_puts(", Value=");
+          if (is_signed) {
+              uart_puts("-");
+              int complement = ~value | 1;
+              uart_ascii_signed(complement, buf);
+              uart_puts(buf);
+          } else {
+              uart_ascii(value, buf);
+              uart_puts(buf);
+          }
+          uart_puts("\r\n");
+      }
+  }
+  
+  uart_puts("------------\r\n");
+  uart_puts("Total entries: ");
+  uart_ascii(kv_index, buf);
+  uart_puts(buf);
+  uart_puts("\r\n");
+  
+  return 0;
+}

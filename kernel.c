@@ -65,6 +65,11 @@ void kernel_main() {
       } else {
         uart_puts("\r\nINVALID INPUT\r\n");
       }
+    } else if (buf[0] == 'l' && buf[1] == 'o' && buf[2] == 'g') {
+      int result = kv_print_log();
+      if (result ==-1) {
+        uart_puts("\r\nNO ENTRIES TO DISPLAY\r\n");
+      }
     }
   }
 }
