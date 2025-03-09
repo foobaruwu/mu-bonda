@@ -52,7 +52,7 @@ void kernel_main() {
       }
     } else if (buf[0] == 'd' && buf[1] == 'e' && buf[2] == 'l') {
       unsigned int key;
-      if (parse_key(buf + 3, &key)) {
+      if (parse_key(buf + 4, &key)) {
         int result = kv_delete(key);
         if (result == 0) {
           uart_puts("\r\nKEY DELETED\r\n");

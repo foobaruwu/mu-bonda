@@ -8,7 +8,6 @@ static int kv_index = 0;
 void kv_init() { kv_index = 0; }
 
 int kv_put(uint32_t key, uint32_t value, uint32_t is_signed) {
-  char buf[128];
   if (kv_index >= MAX_ENTRIES) {
     uart_puts("KVSTORE FULL\n");
     return -1;
@@ -21,45 +20,13 @@ int kv_put(uint32_t key, uint32_t value, uint32_t is_signed) {
       .value = value,
   };
 
-  uart_puts("\r\nPUT: ");
-  itoa(kv_log[kv_index - 1].key, buf, 10);
-  uart_puts(buf);
-  uart_puts(" | ");
-  if (is_signed)
-    itoa(-kv_log[kv_index - 1].value, buf, 10);
-  else
-    itoa(kv_log[kv_index - 1].value, buf, 10);
-  uart_puts(buf);
-  uart_puts(" | ");
-  itoa(kv_log[kv_index - 1].is_tombstone, buf, 10);
-  uart_puts(buf);
-  uart_puts(" | ");
-  itoa(kv_log[kv_index - 1].is_signed, buf, 10);
-  uart_puts(buf);
-
   uart_puts("\r\n[debug]: KVSTORE PUT\r\n");
   return 0;
 }
 
 int kv_get(uint32_t key, uint32_t *value, uint32_t *is_signed) {
-  // TEST:
-  // char buf[64];
-  // uart_puts("\r\nchecking for ");
-  // itoa((int)key, buf, 10);
-  // uart_puts(buf);
-  // uart_puts("\r\n");
-
   for (int i = kv_index - 1; i >= 0; i--) {
     kv_entry_t entry = kv_log[i];
-
-    // TEST:
-    // itoa(entry.key, buf, 10);
-    // uart_puts("\r\nchecking ");
-    // uart_puts(buf);
-    // uart_puts(" with ");
-    // itoa(key, buf, 10);
-    // uart_puts(buf);
-    // uart_puts("\r\n");
 
     if (entry.key == key) {
       if (entry.is_tombstone)
@@ -84,6 +51,7 @@ int kv_delete(uint32_t key) {
       .key = key,
       .value = 0,
   };
+
   uart_puts("\r\nKVSTORE DELETE\r\n");
   return 0;
 }
