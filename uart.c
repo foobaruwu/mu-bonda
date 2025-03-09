@@ -36,6 +36,7 @@ void uart_ascii(unsigned int value, char *buf) {
   int i = 0;
   char c;
   c = value % 10;
+  buf[31] = '\0';
   while (i < 31) {
     buf[31 - i] = c + '0';
     i++;

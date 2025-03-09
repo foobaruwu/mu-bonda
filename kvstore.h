@@ -3,23 +3,15 @@
 
 #define MAX_ENTRIES 1024
 
-#define BITMASK(high, low) (((unsigned long long)1 << (high - low + 1)) - 1) << low)
+typedef unsigned char uint8_t;
+typedef unsigned int uint32_t;
+typedef unsigned long long uint64_t;
 
-#define KEY_MASK(src) (unsigned int)((src & BITMASK(30, 0) >> 0)
-#define VAL_MASK(src) (unsigned int)((src & BITMASK(61, 31) >> 31)
-#define TOMBSTONE_MASK(src) (unsigned int)((src & BITMASK(62, 62) >> 62)
-#define SIGNED_MASK(src) (unsigned int)((src & BITMASK(63, 63) >> 63)
-
-#define CREATE_ENTRY_ULL(key, value, is_signed, is_tombstone)                  \
-  (unsigned long long)((unsigned long long)0 | (unsigned long long)key << 0 |  \
-                       (unsigned long long)value << 31 |                       \
-                       (unsigned long long)is_tombstone << 62 |                \
-                       (unsigned long long)is_signed << 63)
-
-#define CREATE_ENTRY_T(entry) (kv_entry_t){.data = entry};
-
-typedef struct {
-  unsigned long long data;
+typedef struct __attribute__((packed, aligned(8))) {
+  uint8_t is_signed : 1;
+  uint8_t is_tombstone : 1;
+  uint32_t key : 31;
+  uint32_t value : 31;
 } kv_entry_t;
 
 void kv_init();

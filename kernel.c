@@ -5,7 +5,6 @@ int parse_key(const char *str, unsigned int *key);
 int parse_input(const char *str, unsigned int *key, unsigned int *value,
                 unsigned int *is_signed);
 void kernel_main() {
-  // uart_init();
   kv_init();
   uart_puts("KVSTORE INIT\r\n");
 

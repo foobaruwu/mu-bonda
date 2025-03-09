@@ -12,8 +12,12 @@ int kv_put(unsigned int key, unsigned int value, unsigned int is_signed) {
     return -1;
   }
 
-  kv_log[kv_index++] =
-      CREATE_ENTRY_T(CREATE_ENTRY_ULL(key, value, is_signed, 0));
+  kv_log[kv_index++] = (kv_entry_t){
+      .is_signed = is_signed,
+      .is_tombstone = 0,
+      .key = key,
+      .value = value,
+  };
 
   uart_puts("\r\n[debug]: KVSTORE PUT\r\n");
   return 0;
@@ -21,12 +25,12 @@ int kv_put(unsigned int key, unsigned int value, unsigned int is_signed) {
 
 int kv_get(unsigned int key, unsigned int *value, unsigned int *is_signed) {
   for (int i = kv_index - 1; i >= 0; i--) {
-    unsigned long long entry = kv_log[i].data;
-    if (KEY_MASK(entry) == key) {
-      if (TOMBSTONE_MASK(entry))
+    kv_entry_t entry = kv_log[i];
+    if (entry.key == key) {
+      if (entry.is_tombstone)
         return -1;
-      *value = VAL_MASK(key);
-      *is_signed = SIGNED_MASK(key);
+      *value = entry.value;
+      *is_signed = entry.is_signed;
       uart_puts("\r\nKVSTORE GET\r\n");
     }
   }
@@ -40,7 +44,12 @@ int kv_delete(unsigned int key) {
   };
   // unsigned long long entry =
   //     ((unsigned long long)key & 0xFFFFFFFF) | (1ULL << 62);
-  kv_log[kv_index++] = CREATE_ENTRY_T(CREATE_ENTRY_ULL(key, 0, 0, 1));
+  kv_log[kv_index++] = (kv_entry_t){
+      .is_signed = 0,
+      .is_tombstone = 1,
+      .key = key,
+      .value = 0,
+  };
   uart_puts("\r\nKVSTORE DELETE\r\n");
   return 0;
 }
@@ -66,11 +75,11 @@ int kv_print_log(int count) {
 
   // Iterate in reverse order to show newest entries first
   for (int i = kv_index - 1; i >= start; i--) {
-    unsigned long long entry = kv_log[i].data;
-    unsigned int key = KEY_MASK(entry);
-    unsigned int value = VAL_MASK(entry);
-    unsigned int is_signed = SIGNED_MASK(entry);
-    unsigned int is_deleted = TOMBSTONE_MASK(entry);
+    kv_entry_t entry = kv_log[i];
+    unsigned int key = entry.key;
+    unsigned int value = entry.value;
+    unsigned int is_signed = entry.is_signed;
+    unsigned int is_deleted = entry.is_tombstone;
 
     uart_puts("Entry [");
     uart_ascii(i, buf);
