@@ -15,9 +15,7 @@ void kernel_main() {
     uart_puts("\r\n>");
     uart_gets(buf, 128);
 
-    // uart_puts("\r\nrecv: ");
-    // uart_puts(buf);
-    // uart_puts("\r\n");
+    uart_puts("\r\n");
 
     if (buf[0] == 'p' && buf[1] == 'u' && buf[2] == 't') {
       unsigned int key, value, is_signed = 0;
@@ -68,9 +66,10 @@ void kernel_main() {
     } else if (buf[0] == 'l' && buf[1] == 'o' && buf[2] == 'g') {
       int count = 10;
       char *param = buf + 3;
-      
-      while (*param == ' ') param++;
-      
+
+      while (*param == ' ')
+        param++;
+
       if (*param == '*') {
         count = -1;
       } else if (*param >= '0' && *param <= '9') {
@@ -80,7 +79,7 @@ void kernel_main() {
           param++;
         }
       }
-      
+
       int result = kv_print_log(count);
       if (result == -1) {
         uart_puts("\r\nNO ENTRIES TO DISPLAY\r\n");

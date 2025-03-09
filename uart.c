@@ -1,12 +1,14 @@
 #include "uart.h"
 
 void uart_putc(char c) {
-  while (UART_REG(UART0_FR) & FR_TXFF);
+  while (UART_REG(UART0_FR) & FR_TXFF)
+    ;
   UART_REG(UART0_DR) = c;
 }
 
 char uart_getc() {
-  while (UART_REG(UART0_FR) & FR_RXFE);
+  while (UART_REG(UART0_FR) & FR_RXFE)
+    ;
   return UART_REG(UART0_DR);
 }
 

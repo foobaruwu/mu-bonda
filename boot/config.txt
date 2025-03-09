@@ -1,0 +1,2 @@
+enable_rp1_uart=1
+pciex4_reset=0
