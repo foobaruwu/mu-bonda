@@ -1,6 +1,7 @@
 #include "kvstore.h"
 #include "lib.h"
 #include "uart.h"
+#include "timer.h" 
 
 int parse_key(const char *str, unsigned int *key);
 int parse_input(const char *str, unsigned int *key, unsigned int *value,
@@ -16,6 +17,15 @@ void kernel_main() {
     uart_puts("\r\n>");
     uart_gets(buf, 128);
     uart_puts("\r\n");
+    
+    uint64_t elapsed_us;
+    timer_init();
+    uint32_t timer_freq = timer_get_frequency();
+    uart_puts("TIMER FREQUENCY: ");
+    itoa(timer_freq, buf, 10);
+    uart_puts(buf);
+    uart_puts(" Hz\r\n");
+    time_start();
 
     if (buf[0] == 'p' && buf[1] == 'u' && buf[2] == 't') {
       unsigned int key, value, is_signed = 0;
@@ -84,6 +94,15 @@ void kernel_main() {
         uart_puts("\r\nNO ENTRIES TO DISPLAY\r\n");
       }
     }
+    
+    elapsed_us = time_end();
+    uart_puts("ELAPSED TIME: ");
+    itoa(elapsed_us, buf, 10);
+    uart_puts(buf);
+    uart_puts(" us\r\n");
+    
+
+
   }
 }
 
