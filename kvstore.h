@@ -13,6 +13,6 @@ void kv_init();
 int kv_put(unsigned int key, unsigned int value, unsigned int is_signed);
 int kv_get(unsigned int key, unsigned int *value, unsigned int *is_signed);
 int kv_delete(unsigned int key);
-int kv_print_log();
+int kv_print_log(int count);
 
 #endif

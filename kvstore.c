@@ -49,8 +49,8 @@ int kv_delete(unsigned int key) {
   return 0;
 }
 
-int kv_print_log() {
-  char buf[32];
+int kv_print_log(int count) {
+  char buf[64];  
   
   if (kv_index == 0) {
       uart_puts("KVSTORE EMPTY\r\n");
@@ -60,7 +60,16 @@ int kv_print_log() {
   uart_puts("KVSTORE LOG:\r\n");
   uart_puts("------------\r\n");
   
-  for (int i = 0; i < kv_index; i++) {
+  // Calculate start and end indices for display
+  int start = 0;
+  int end = kv_index;
+  
+  if (count > 0 && count < kv_index) {
+      start = kv_index - count;
+  }
+  
+  // Iterate in reverse order to show newest entries first
+  for (int i = kv_index - 1; i >= start; i--) {
       unsigned long long entry = kv_log[i].data;
       unsigned int key = entry & 0x7FFFFFFF;
       unsigned int value = (entry >> 31) & 0x7FFFFFFF;
@@ -94,10 +103,14 @@ int kv_print_log() {
   }
   
   uart_puts("------------\r\n");
-  uart_puts("Total entries: ");
+  int displayed = (count > 0 && count < kv_index) ? count : kv_index;
+  uart_puts("Displaying ");
+  uart_ascii(displayed, buf);
+  uart_puts(buf);
+  uart_puts(" of ");
   uart_ascii(kv_index, buf);
   uart_puts(buf);
-  uart_puts("\r\n");
+  uart_puts(" total entries\r\n");
   
   return 0;
 }

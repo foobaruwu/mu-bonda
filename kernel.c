@@ -66,8 +66,23 @@ void kernel_main() {
         uart_puts("\r\nINVALID INPUT\r\n");
       }
     } else if (buf[0] == 'l' && buf[1] == 'o' && buf[2] == 'g') {
-      int result = kv_print_log();
-      if (result ==-1) {
+      int count = 10;
+      char *param = buf + 3;
+      
+      while (*param == ' ') param++;
+      
+      if (*param == '*') {
+        count = -1;
+      } else if (*param >= '0' && *param <= '9') {
+        count = 0;
+        while (*param >= '0' && *param <= '9') {
+          count = count * 10 + (*param - '0');
+          param++;
+        }
+      }
+      
+      int result = kv_print_log(count);
+      if (result == -1) {
         uart_puts("\r\nNO ENTRIES TO DISPLAY\r\n");
       }
     }
