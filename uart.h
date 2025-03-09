@@ -45,6 +45,7 @@
 // thrown out of uart during boot
 // Although we should be writing our own uart handler, for other benefits, should be good for now
 
+// TODO: error handling for uart functions
 // Core functions
 void uart_putc(char c);
 char uart_getc();

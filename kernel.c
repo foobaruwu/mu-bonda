@@ -22,14 +22,20 @@ void kernel_main() {
     if (buf[0] == 'p' && buf[1] == 'u' && buf[2] == 't') {
       unsigned int key, value, is_signed = 0;
       if (parse_input(buf + 3, &key, &value, &is_signed)) {
-        kv_put(key, value, is_signed);
+        int result = kv_put(key, value, is_signed);
+        if (result == 0) {
+          uart_puts("\r\nKEY SET SUCCESSFULLY\r\n");
+        } else {
+          uart_puts("\r\nFAILED TO SET KEY\r\n");
+        }
       } else {
         uart_puts("\r\nINVALID INPUT\r\n");
       }
     } else if (buf[0] == 'g' && buf[1] == 'e' && buf[2] == 't') {
       unsigned int key, value, is_signed = 0;
       if (parse_key(buf + 3, &key)) {
-        if (kv_get(key, &value, &is_signed) == 0) {
+        int result = kv_get(key, &value, &is_signed);
+        if (result == 0) {
           uart_puts("\r\nVALUE: ");
           if (is_signed) {
             uart_puts("-");
@@ -44,12 +50,18 @@ void kernel_main() {
         } else {
           uart_puts("\r\nKEY NOT FOUND\r\n");
         }
+      } else {
+        uart_puts("\r\nINVALID INPUT\r\n");
       }
     } else if (buf[0] == 'd' && buf[1] == 'e' && buf[2] == 'l') {
       unsigned int key;
       if (parse_key(buf + 3, &key)) {
-        kv_delete(key);
-        uart_puts("\r\nKEY DELETED\r\n");
+        int result = kv_delete(key);
+        if (result == 0) {
+          uart_puts("\r\nKEY DELETED\r\n");
+        } else {
+          uart_puts("\r\nFAILED TO DELETE KEY\r\n");
+        }
       } else {
         uart_puts("\r\nINVALID INPUT\r\n");
       }

@@ -6,10 +6,10 @@ static int kv_index = 0;
 
 void kv_init() { kv_index = 0; }
 
-void kv_put(unsigned int key, unsigned int value, unsigned int is_signed) {
+int kv_put(unsigned int key, unsigned int value, unsigned int is_signed) {
   if (kv_index >= MAX_ENTRIES) {
     uart_puts("KVSTORE FULL\n");
-    return;
+    return -1;
   }
 
   unsigned long long entry = ((unsigned long long)key & 0xFFFFFFFF) |
@@ -18,6 +18,7 @@ void kv_put(unsigned int key, unsigned int value, unsigned int is_signed) {
 
   kv_log[kv_index++] = (kv_entry_t){entry};
   uart_puts("KVSTORE PUT\n");
+  return 0;
 }
 
 int kv_get(unsigned int key, unsigned int *value, unsigned int *is_signed) {
@@ -36,12 +37,14 @@ int kv_get(unsigned int key, unsigned int *value, unsigned int *is_signed) {
   return -1;
 }
 
-void kv_delete(unsigned int key) {
-  if (kv_index >= MAX_ENTRIES) {
-    uart_puts("KVSTORE FULL\n");
+int kv_delete(unsigned int key) {
+  if (kv_index == 0) {
+    uart_puts("KVSTORE EMPTY\n");
+    return -1;
   }
   unsigned long long entry =
       ((unsigned long long)key & 0xFFFFFFFF) | (1ULL << 62);
   kv_log[kv_index++] = (kv_entry_t){entry};
   uart_puts("KVSTORE DELETE\n");
+  return 0;
 }
