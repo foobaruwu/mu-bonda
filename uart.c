@@ -1,16 +1,13 @@
 #include "uart.h"
-#include "io.h"
 
 void uart_putc(char c) {
-  while (MMIO_REG(UART0_FR) & FR_TXFF)
-    ;
-  MMIO_REG(UART0_DR) = c;
+  while (UART_REG(UART0_FR) & FR_TXFF);
+  UART_REG(UART0_DR) = c;
 }
 
 char uart_getc() {
-  while (MMIO_REG(UART0_FR) & FR_RXFE)
-    ;
-  return MMIO_REG(UART0_DR);
+  while (UART_REG(UART0_FR) & FR_RXFE);
+  return UART_REG(UART0_DR);
 }
 
 void uart_puts(const char *s) {

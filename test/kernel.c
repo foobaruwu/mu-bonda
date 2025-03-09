@@ -1,4 +1,4 @@
-#define MMIO_REG(x) (*((volatile unsigned long int *)(x)))
+#define UART_REG(x) (*((volatile unsigned long int *)(x)))
 
 #define UART_BASE 0x1c00030000
 
@@ -19,15 +19,15 @@
 #define CR_RXE (1 << 9)
 
 void uart_putc(char c) {
-  while (MMIO_REG(UART0_FR) & FR_TXFF)
+  while (UART_REG(UART0_FR) & FR_TXFF)
     ;
-  MMIO_REG(UART0_DR) = c;
+  UART_REG(UART0_DR) = c;
 }
 
 char uart_getc() {
-  while (MMIO_REG(UART0_FR) & FR_RXFE)
+  while (UART_REG(UART0_FR) & FR_RXFE)
     ;
-  return MMIO_REG(UART0_DR);
+  return UART_REG(UART0_DR);
 }
 
 void kernel_main() {

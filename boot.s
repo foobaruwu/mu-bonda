@@ -3,7 +3,7 @@
 _start:
     msr DAIFSet, #0xf 
 
-    mov sp, #0x80000
+    mov sp, #0x8000
     bl kernel_main
 
 fails:

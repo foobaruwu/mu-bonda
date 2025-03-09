@@ -6,6 +6,7 @@
 // QAotzxd+oUpjCE9fpqdv key-v2@pitust.dev) and clever___(204112
 // 578425782272)
 #define UART_BASE 0x1c00030000
+#define UART_REG(x) (*((volatile unsigned long int *)(x)))
 
 #define UART0_DR (UART_BASE + 0x00)
 #define UART0_FR (UART_BASE + 0x18)
@@ -17,11 +18,17 @@
 
 #define FR_TXFF (1 << 5)
 #define FR_RXFE (1 << 4)
-#define LCR_H_FEN (1 << 4)
-#define LCR_H_WLEN_8 (3 << 5)
-#define CR_UARTEN (1 << 0)
-#define CR_TXE (1 << 8)
-#define CR_RXE (1 << 9)
+
+
+
+
+// None of these are needed too
+
+// #define LCR_H_FEN (1 << 4)
+// #define LCR_H_WLEN_8 (3 << 5)
+// #define CR_UARTEN (1 << 0)
+// #define CR_TXE (1 << 8)
+// #define CR_RXE (1 << 9)
 
 // void uart_init();
 //
@@ -36,7 +43,7 @@
 // enable_rp1_uart does all the heavy lifting for us
 // and we should see `RP1_UART 0000001c00030000`
 // thrown out of uart during boot
-//
+// Although we should be writing our own uart handler, for other benefits, should be good for now
 
 // Core functions
 void uart_putc(char c);
