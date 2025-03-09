@@ -8,6 +8,7 @@ static int kv_index = 0;
 void kv_init() { kv_index = 0; }
 
 int kv_put(uint32_t key, uint32_t value, uint32_t is_signed) {
+  char buf[128];
   if (kv_index >= MAX_ENTRIES) {
     uart_puts("KVSTORE FULL\n");
     return -1;
@@ -20,27 +21,45 @@ int kv_put(uint32_t key, uint32_t value, uint32_t is_signed) {
       .value = value,
   };
 
+  uart_puts("\r\nPUT: ");
+  itoa(kv_log[kv_index - 1].key, buf, 10);
+  uart_puts(buf);
+  uart_puts(" | ");
+  if (is_signed)
+    itoa(-kv_log[kv_index - 1].value, buf, 10);
+  else
+    itoa(kv_log[kv_index - 1].value, buf, 10);
+  uart_puts(buf);
+  uart_puts(" | ");
+  itoa(kv_log[kv_index - 1].is_tombstone, buf, 10);
+  uart_puts(buf);
+  uart_puts(" | ");
+  itoa(kv_log[kv_index - 1].is_signed, buf, 10);
+  uart_puts(buf);
+
   uart_puts("\r\n[debug]: KVSTORE PUT\r\n");
   return 0;
 }
 
 int kv_get(uint32_t key, uint32_t *value, uint32_t *is_signed) {
-  char buf[64];
-  uart_puts("\r\nchecking for ");
-  itoa(key, buf, 10);
-  uart_puts(buf);
-  uart_puts("\r\n");
+  // TEST:
+  // char buf[64];
+  // uart_puts("\r\nchecking for ");
+  // itoa((int)key, buf, 10);
+  // uart_puts(buf);
+  // uart_puts("\r\n");
 
   for (int i = kv_index - 1; i >= 0; i--) {
     kv_entry_t entry = kv_log[i];
 
-    itoa(entry.key, buf, 10);
-    uart_puts("\r\nchecking ");
-    uart_puts(buf);
-    uart_puts(" with ");
-    itoa(key, buf, 10);
-    uart_puts(buf);
-    uart_puts("\r\n");
+    // TEST:
+    // itoa(entry.key, buf, 10);
+    // uart_puts("\r\nchecking ");
+    // uart_puts(buf);
+    // uart_puts(" with ");
+    // itoa(key, buf, 10);
+    // uart_puts(buf);
+    // uart_puts("\r\n");
 
     if (entry.key == key) {
       if (entry.is_tombstone)
@@ -48,6 +67,7 @@ int kv_get(uint32_t key, uint32_t *value, uint32_t *is_signed) {
       *value = entry.value;
       *is_signed = entry.is_signed;
       uart_puts("\r\nKVSTORE GET\r\n");
+      return 0;
     }
   }
   return -1;
@@ -58,8 +78,6 @@ int kv_delete(uint32_t key) {
     uart_puts("KVSTORE EMPTY\n");
     return -1;
   };
-  // unsigned long long entry =
-  //     ((unsigned long long)key & 0xFFFFFFFF) | (1ULL << 62);
   kv_log[kv_index++] = (kv_entry_t){
       .is_signed = 0,
       .is_tombstone = 1,
@@ -101,16 +119,15 @@ int kv_print_log(int count) {
     uart_puts(buf);
     uart_puts("]: ");
 
-    uart_puts("Key=");
+    uart_puts("Key: ");
     itoa(key, buf, 10);
     uart_puts(buf);
 
     if (is_deleted) {
       uart_puts(" (DELETED)\r\n");
     } else {
-      uart_puts(", Value=");
+      uart_puts(", Value: ");
       if (is_signed) {
-        uart_puts("-");
         itoa(-value, buf, 10);
         uart_puts(buf);
       } else {

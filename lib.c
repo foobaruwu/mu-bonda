@@ -22,6 +22,10 @@ void reverse(char *buf, int length) {
 // NOTE: need to make this versatile for and
 // base
 void itoa(int val, char *buf, int _base) {
+  if (val == 0) {
+    buf[0] = '0';
+    buf[1] = '\0';
+  }
   int i = 0;
   int sign = 0;
 

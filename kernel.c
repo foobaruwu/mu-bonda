@@ -1,4 +1,5 @@
 #include "kvstore.h"
+#include "lib.h"
 #include "uart.h"
 
 int parse_key(const char *str, unsigned int *key);
@@ -14,7 +15,6 @@ void kernel_main() {
   while (1) {
     uart_puts("\r\n>");
     uart_gets(buf, 128);
-
     uart_puts("\r\n");
 
     if (buf[0] == 'p' && buf[1] == 'u' && buf[2] == 't') {
@@ -31,17 +31,16 @@ void kernel_main() {
       }
     } else if (buf[0] == 'g' && buf[1] == 'e' && buf[2] == 't') {
       unsigned int key, value, is_signed = 0;
-      if (parse_key(buf + 3, &key)) {
-        int result = kv_get(key, &value, &is_signed);
+      if (parse_key(buf + 4, &key)) {
+        int result = kv_get((int)key, &value, &is_signed);
         if (result == 0) {
           uart_puts("\r\nVALUE: ");
           if (is_signed) {
             uart_puts("-");
-            int complement = ~value | 1;
-            uart_ascii_signed(complement, buf);
+            itoa(-value, buf, 10);
             uart_puts(buf);
           } else {
-            uart_ascii(value, buf);
+            itoa(value, buf, 10);
             uart_puts(buf);
           }
           uart_puts("\r\n");
@@ -94,6 +93,13 @@ int parse_key(const char *str, unsigned int *key) {
     *key = *key * 10 + (*str - '0');
     str++;
   }
+  // TEST:
+  // char buf[128];
+  // int temp = *key;
+  // itoa(temp, buf, 10);
+  // uart_puts("\r\nparsed key: ");
+  // uart_puts(buf);
+  // uart_puts("\r\n");
   return (*str == '\0' || *str == ' ');
 }
 
