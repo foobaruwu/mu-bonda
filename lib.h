@@ -6,6 +6,8 @@
 typedef unsigned char uint8_t;
 typedef unsigned int uint32_t;
 typedef unsigned long long uint64_t;
+typedef int int32_t;
+typedef long long int64_t;
 
 #define SIGNED_MAX 1073741823
 #define SIGNED_MIN -1073741824

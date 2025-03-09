@@ -1,6 +1,7 @@
 #include "kvstore.h"
 #include "lib.h"
 #include "uart.h"
+#include "timer.h" 
 
 int parse_key(const char *str, unsigned int *key);
 int parse_input(const char *str, unsigned int *key, unsigned int *value,
@@ -16,6 +17,8 @@ void kernel_main() {
     uart_puts("\r\n>");
     uart_gets(buf, 128);
     uart_puts("\r\n");
+    
+    timer_start_command();
 
     if (buf[0] == 'p' && buf[1] == 'u' && buf[2] == 't') {
       unsigned int key, value, is_signed = 0;
@@ -84,6 +87,8 @@ void kernel_main() {
         uart_puts("\r\nNO ENTRIES TO DISPLAY\r\n");
       }
     }
+    
+    timer_print_elapsed(timer_end_command());
   }
 }
 
