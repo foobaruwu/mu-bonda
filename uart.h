@@ -1,11 +1,20 @@
 #ifndef UART_H
 #define UART_H
 
+#pragma once
+
 // god bless these osdevs on discord pitust(696410219663851552
 // ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIGSvTSRFfSQC5HFWsgdWN734
 // QAotzxd+oUpjCE9fpqdv key-v2@pitust.dev) and clever___(204112
 // 578425782272)
+
+// DEBUG: for RPi4 testing with qemu
+#if defined(DEBUG)
+#define UART_BASE 0xFE201000
+#else
 #define UART_BASE 0x1c00030000
+#endif
+
 #define UART_REG(x) (*((volatile unsigned long int *)(x)))
 
 #define UART0_DR (UART_BASE + 0x00)
@@ -18,9 +27,6 @@
 
 #define FR_TXFF (1 << 5)
 #define FR_RXFE (1 << 4)
-
-
-
 
 // None of these are needed too
 
@@ -43,7 +49,8 @@
 // enable_rp1_uart does all the heavy lifting for us
 // and we should see `RP1_UART 0000001c00030000`
 // thrown out of uart during boot
-// Although we should be writing our own uart handler, for other benefits, should be good for now
+// Although we should be writing our own uart handler, for other benefits,
+// should be good for now
 
 // TODO: error handling for uart functions
 // Core functions

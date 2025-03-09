@@ -1,11 +1,10 @@
 #ifndef KVSTORE_H
 #define KVSTORE_H
+#pragma once
+
+#include "lib.h"
 
 #define MAX_ENTRIES 1024
-
-typedef unsigned char uint8_t;
-typedef unsigned int uint32_t;
-typedef unsigned long long uint64_t;
 
 typedef struct __attribute__((packed, aligned(8))) {
   uint8_t is_signed : 1;
@@ -16,9 +15,9 @@ typedef struct __attribute__((packed, aligned(8))) {
 
 void kv_init();
 
-int kv_put(unsigned int key, unsigned int value, unsigned int is_signed);
-int kv_get(unsigned int key, unsigned int *value, unsigned int *is_signed);
-int kv_delete(unsigned int key);
+int kv_put(uint32_t key, uint32_t value, uint32_t is_signed);
+int kv_get(uint32_t key, uint32_t *value, uint32_t *is_signed);
+int kv_delete(uint32_t key);
 int kv_print_log(int count);
 
 #endif
