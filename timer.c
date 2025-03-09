@@ -1,85 +1,38 @@
+#include "lib.h"
 #include "timer.h"
 
-static inline void mmio_write(uint32_t reg, uint32_t data)
-{
-    *(volatile uint32_t*)(reg) = data;
+static uint64_t start_time = 0;
+static uint64_t timer_freq = 0;
+
+void timer_init(void) {
+    uint64_t freq;
+    asm volatile("mrs %0, cntfrq_el0" : "=r" (freq));
+    timer_freq = freq;
 }
 
-static inline uint32_t mmio_read(uint32_t reg)
-{
-    return *(volatile uint32_t*)(reg);
+uint64_t timer_get_counter(void) {
+    uint64_t count;
+    asm volatile("mrs %0, cntpct_el0" : "=r" (count));
+    return count;
 }
 
-
-void timer_init(void)
-{
-    mmio_write(RP1_TIMER_BASE + TIMER_CS, 0xF);
+void time_start(void) {
+    start_time = timer_get_counter();
 }
 
-
-uint64_t timer_get_ticks(void)
-{
-    uint32_t hi, lo;
+uint64_t time_end(void) {
+    uint64_t end_time = timer_get_counter();
+    uint64_t ticks = end_time - start_time;
     
-    hi = mmio_read(RP1_TIMER_BASE + TIMER_CHI);
-    lo = mmio_read(RP1_TIMER_BASE + TIMER_CLO);
-    
-    if (hi != mmio_read(RP1_TIMER_BASE + TIMER_CHI)) {
-        hi = mmio_read(RP1_TIMER_BASE + TIMER_CHI);
-        lo = mmio_read(RP1_TIMER_BASE + TIMER_CLO);
-    }
-    
-    return ((uint64_t)hi << 32) | lo;
+
+    return (ticks * 1000000000) / timer_freq;
 }
 
-
-void timer_delay_us(uint32_t us)
-{
-    uint64_t start = timer_get_ticks();
-    
-    uint64_t target = start + us;
-    
-    while (timer_get_ticks() < target) {
-n
-        __asm__ volatile("yield");
-    }
+uint64_t time_end_ticks(void) {
+    uint64_t end_time = timer_get_counter();
+    return end_time - start_time;
 }
 
-
-void timer_delay_ms(uint32_t ms)
-{
-    timer_delay_us(ms * 1000);
-}
-
-
-void timer_start(timer_context_t* timer)
-{
-    if (timer) {
-        timer->start_time = timer_get_ticks();
-        timer->end_time = 0;
-    }
-}
-
-
-void timer_end(timer_context_t* timer)
-{
-    if (timer) {
-        timer->end_time = timer_get_ticks();
-    }
-}
-
-
-uint64_t timer_elapsed_us(timer_context_t* timer)
-{
-    if (!timer || timer->end_time < timer->start_time) {
-        return 0;
-    }
-    
-    return timer->end_time - timer->start_time;
-}
-
-
-uint32_t timer_elapsed_ms(timer_context_t* timer)
-{
-    return (uint32_t)(timer_elapsed_us(timer) / 1000);
+uint64_t timer_get_frequency(void) {
+    return timer_freq;
 }
