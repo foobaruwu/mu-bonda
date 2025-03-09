@@ -1,74 +1,85 @@
 #include "timer.h"
-#include "uart.h"
 
-static uint64_t command_start_time = 0;
+static inline void mmio_write(uint32_t reg, uint32_t data)
+{
+    *(volatile uint32_t*)(reg) = data;
+}
 
-uint64_t timer_get_time_us(void) {
-    uint32_t hi = *((volatile uint32_t*)TIMER_COUNT_HI);
-    uint32_t lo = *((volatile uint32_t*)TIMER_COUNT_LO);
+static inline uint32_t mmio_read(uint32_t reg)
+{
+    return *(volatile uint32_t*)(reg);
+}
+
+
+void timer_init(void)
+{
+    mmio_write(RP1_TIMER_BASE + TIMER_CS, 0xF);
+}
+
+
+uint64_t timer_get_ticks(void)
+{
+    uint32_t hi, lo;
     
-    if (hi != *((volatile uint32_t*)TIMER_COUNT_HI)) {
-        hi = *((volatile uint32_t*)TIMER_COUNT_HI);
-        lo = *((volatile uint32_t*)TIMER_COUNT_LO);
+    hi = mmio_read(RP1_TIMER_BASE + TIMER_CHI);
+    lo = mmio_read(RP1_TIMER_BASE + TIMER_CLO);
+    
+    if (hi != mmio_read(RP1_TIMER_BASE + TIMER_CHI)) {
+        hi = mmio_read(RP1_TIMER_BASE + TIMER_CHI);
+        lo = mmio_read(RP1_TIMER_BASE + TIMER_CLO);
     }
     
-    return (((uint64_t)hi << 32) | lo) / 48;
+    return ((uint64_t)hi << 32) | lo;
 }
 
-void timer_start_command(void) {
-    command_start_time = timer_get_time_us();
-}
 
-uint64_t timer_end_command(void) {
-    uint64_t end_time = timer_get_time_us();
-    return end_time - command_start_time;
-}
-
-void timer_print_elapsed(uint64_t microseconds) {
-    char buf[32];
+void timer_delay_us(uint32_t us)
+{
+    uint64_t start = timer_get_ticks();
     
-    uart_puts("\r\n[Execution time: ");
+    uint64_t target = start + us;
     
-    if (microseconds < 1000) {
-        itoa((int)microseconds, buf, 10);
-        uart_puts(buf);
-        uart_puts(" μs");
-    } else if (microseconds < 1000000) {
-        int ms = microseconds / 1000;
-        int decimal = (microseconds % 1000) / 10;
-        
-        itoa(ms, buf, 10);
-        uart_puts(buf);
-        uart_puts(".");
-        
-        if (decimal < 10) {
-            uart_puts("0");
-        }
-        if (decimal < 100 && decimal >= 0) {
-            uart_puts("0");
-        }
-        
-        itoa(decimal, buf, 10);
-        uart_puts(buf);
-        uart_puts(" ms");
-    } else {
-        int sec = microseconds / 1000000;
-        int decimal = (microseconds % 1000000) / 1000;
-        
-        itoa(sec, buf, 10);
-        uart_puts(buf);
-        uart_puts(".");
-        
-        if (decimal < 10) {
-            uart_puts("00");
-        } else if (decimal < 100) {
-            uart_puts("0");
-        }
-        
-        itoa(decimal, buf, 10);
-        uart_puts(buf);
-        uart_puts(" s");
+    while (timer_get_ticks() < target) {
+n
+        __asm__ volatile("yield");
+    }
+}
+
+
+void timer_delay_ms(uint32_t ms)
+{
+    timer_delay_us(ms * 1000);
+}
+
+
+void timer_start(timer_context_t* timer)
+{
+    if (timer) {
+        timer->start_time = timer_get_ticks();
+        timer->end_time = 0;
+    }
+}
+
+
+void timer_end(timer_context_t* timer)
+{
+    if (timer) {
+        timer->end_time = timer_get_ticks();
+    }
+}
+
+
+uint64_t timer_elapsed_us(timer_context_t* timer)
+{
+    if (!timer || timer->end_time < timer->start_time) {
+        return 0;
     }
     
-    uart_puts("]\r\n");
+    return timer->end_time - timer->start_time;
+}
+
+
+uint32_t timer_elapsed_ms(timer_context_t* timer)
+{
+    return (uint32_t)(timer_elapsed_us(timer) / 1000);
 }
