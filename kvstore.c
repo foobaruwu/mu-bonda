@@ -2,6 +2,8 @@
 #include "lib.h"
 #include "uart.h"
 
+//TODO:minimize uart puts
+
 static kv_entry_t kv_log[MAX_ENTRIES];
 static int kv_index = 0;
 
@@ -12,8 +14,13 @@ static int free_list_head = -1;
 static int next_free_entry = 0;
 
 static uint32_t hash_function(uint32_t key) {
+  //hmm modulo seems to be very expensive
   //welp ez hash func because idk a better and nicer one, guess u can use a better one
-  return key % HASH_TABLE_SIZE;
+  key = ((key >> 16) ^ key) * 0x45d9f3b;
+  key = ((key >> 16) ^ key) * 0x45d9f3b;
+  key = (key >> 16) ^ key;
+  return key & (HASH_TABLE_SIZE - 1); 
+  //this might be cheaper because bit shifting 
 }
 
 static hash_entry_t* memory_pool_alloc(void) {

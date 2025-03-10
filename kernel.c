@@ -12,6 +12,7 @@ void kernel_main() {
   uart_puts("KVSTORE INIT\r\n");
 
   char buf[128];
+  char clock_buf[128];
 
   while (1) {
     uart_puts("\r\n>");
@@ -22,8 +23,8 @@ void kernel_main() {
     timer_init();
     uint32_t timer_freq = timer_get_frequency();
     uart_puts("TIMER FREQUENCY: ");
-    itoa(timer_freq, buf, 10);
-    uart_puts(buf);
+    itoa(timer_freq, clock_buf, 10);
+    uart_puts(clock_buf);
     uart_puts(" Hz\r\n");
     time_start();
 
@@ -97,8 +98,8 @@ void kernel_main() {
     
     elapsed_us = time_end();
     uart_puts("ELAPSED TIME: ");
-    itoa(elapsed_us, buf, 10);
-    uart_puts(buf);
+    itoa(elapsed_us, clock_buf, 10);
+    uart_puts(clock_buf);
     uart_puts(" us\r\n");
     
 
