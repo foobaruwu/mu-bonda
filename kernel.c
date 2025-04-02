@@ -2,6 +2,74 @@
 #include "lib.h"
 #include "uart.h"
 #include "timer.h" 
+#include "gpio.h"
+
+
+//NOTE:test not called in main
+void test_led_blink(void) {
+  const uint32_t LED_PIN = 14;  // You can change this to any available GPIO pin
+  char buf[128];
+  
+  uart_puts("\r\nInitializing LED on GPIO ");
+  itoa(LED_PIN, buf, 10);
+  uart_puts(buf);
+  uart_puts("...\r\n");
+  
+  gpio_init();
+  
+  // Set LED pin as output
+  gpio_set_output(LED_PIN);
+  
+  uart_puts("disco time..\r\n");
+  
+  while (1) {
+      gpio_set(LED_PIN);
+      uart_puts("LED ON\r\n");
+      
+      for (volatile int i = 0; i < 5000000; i++);
+      
+      gpio_clear(LED_PIN);
+      uart_puts("LED OFF\r\n");
+      
+      for (volatile int i = 0; i < 5000000; i++);
+  }
+}
+
+void test_temperature_sensor(void) {
+  char buf[128];
+  uart_puts("\r\ninit sensor?\r\n");
+  
+  gpio_init();
+  spi_init();
+  
+  uart_puts("Reading temperature values...\r\n");
+  
+  while (1) {
+    //NOTE:specific to MCP3008, 3v3
+      uint32_t raw_value = adc_read(ADC_CHANNEL_0);
+      
+      uart_puts("Raw ADC value: ");
+      itoa(raw_value, buf, 10);
+      uart_puts(buf);
+      
+      // converting to V and assuming 3v3
+      uint32_t voltage_mv = (raw_value * 3300) / 1023;
+      uart_puts(" | Voltage: ");
+      itoa(voltage_mv, buf, 10);
+      uart_puts(buf);
+      uart_puts(" mV");
+      
+      //convert to temp, need to check the sensor data sheet for its particular formula
+      int32_t temperature = (voltage_mv - 500) / 10;
+      uart_puts(" | Temperature: ");
+      itoa(temperature, buf, 10);
+      uart_puts(buf);
+      uart_puts(" C\r\n");
+      
+      //Delay between readings
+      for (volatile int i = 0; i < 10000000; i++);
+  }
+}
 
 int parse_key(const char *str, unsigned int *key);
 int parse_input(const char *str, unsigned int *key, unsigned int *value,
@@ -102,7 +170,6 @@ void kernel_main() {
     uart_puts(clock_buf);
     uart_puts(" us\r\n");
     
-
 
   }
 }
