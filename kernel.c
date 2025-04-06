@@ -7,7 +7,7 @@
 
 //NOTE:test not called in main
 void test_led_blink(void) {
-  const uint32_t LED_PIN = 14;  // You can change this to any available GPIO pin
+  const uint32_t LED_PIN = 16;  // Using GPIO 16 instead of 14
   char buf[128];
   
   uart_puts("\r\nInitializing LED on GPIO ");
@@ -26,12 +26,12 @@ void test_led_blink(void) {
       gpio_set(LED_PIN);
       uart_puts("LED ON\r\n");
       
-      for (volatile int i = 0; i < 5000000; i++);
+      for (volatile int i = 0; i < 1000000; i++);
       
       gpio_clear(LED_PIN);
       uart_puts("LED OFF\r\n");
       
-      for (volatile int i = 0; i < 5000000; i++);
+      for (volatile int i = 0; i < 1000000; i++);
   }
 }
 

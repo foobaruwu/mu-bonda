@@ -27,6 +27,7 @@ typedef struct {
 void gpio_init(void) {
 ///no init needed i think
 //needed if we have to set up pads, but not needed for rpi5
+    PADS[16] = 0x22;
 }
 
 void gpio_set_function(uint32_t pin, uint32_t function) {
