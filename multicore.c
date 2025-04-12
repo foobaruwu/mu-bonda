@@ -1,5 +1,9 @@
 #include "multicore.h"
 #include "uart.h"
+//BRUHH HOW IS NULL NOT COER
+#ifndef NULL
+#define NULL ((void*)0)
+#endif
 
 volatile core_control_t core_control[MAX_CORES];
 
@@ -11,10 +15,11 @@ static inline void dsb(void) {
     asm volatile("dsb sy" : : : "memory");
 }
 
+// Get current core ID
 uint32_t get_core_id(void) {
     uint32_t core_id;
     asm volatile("mrs %0, mpidr_el1" : "=r" (core_id));
-    return core_id & 3; 
+    return core_id & 3;  
 }
 
 void multicore_init(void) {
@@ -33,7 +38,7 @@ int core_execute_task(uint32_t core_id, core_task_fn task, void* arg) {
     }
     
     while (core_control[core_id].status != CORE_IDLE) {
-        // yield the data here or small delay if needed
+        //yield the data or add a small delay
     }
     
     core_control[core_id].completed = 0;
@@ -53,7 +58,7 @@ uint64_t core_wait_for_completion(uint32_t core_id) {
     }
     
     while (core_control[core_id].completed == 0) {
-        // yield or small delay if needed
+        // yield/delay
     }
     
     return core_control[core_id].result;
@@ -68,7 +73,7 @@ void secondary_main(void) {
     while (1) {
         if (core_control[core_id].status == CORE_BUSY && core_control[core_id].task != NULL) {
             core_task_fn task = core_control[core_id].task;
-            void* arg = core_control[core_id].arg;
+            void* arg = (void*)core_control[core_id].arg;
             
             task(arg);
             
@@ -83,10 +88,10 @@ void secondary_main(void) {
 int execute_on_any_core(core_task_fn task, void* arg) {
     for (int i = 1; i < MAX_CORES; i++) {  
         if (core_control[i].status == CORE_IDLE) {
-            return core_execute_task(i, task, void* arg);
+            return core_execute_task(i, task, arg);  
         }
     }
-    return -1; 
+    return -1;  
 }
 
 void wait_for_all_cores(void) {
