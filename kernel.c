@@ -2,12 +2,14 @@
 #include "lib.h"
 #include "uart.h"
 #include "timer.h" 
+#include "multicore.h"
 
 int parse_key(const char *str, unsigned int *key);
 int parse_input(const char *str, unsigned int *key, unsigned int *value,
                 unsigned int *is_signed);
-
+uint32_t kv_count_parallel(void);
 void kernel_main() {
+  multicore_init();
   kv_init();
   uart_puts("KVSTORE INIT\r\n");
 
@@ -94,6 +96,12 @@ void kernel_main() {
       if (result == -1) {
         uart_puts("\r\nNO ENTRIES TO DISPLAY\r\n");
       }
+    } else if (buf[0] == 'c' && buf[1] == 'o' && buf[2] == 'r' && buf[3] == 'e' && buf[4] == 's') {
+      uint32_t count = kv_count_parallel();
+      uart_puts("\r\nTotal active keys (counted in parallel): ");
+      itoa(count, buf, 10);
+      uart_puts(buf);
+      uart_puts("\r\n");
     }
     
     elapsed_us = time_end();

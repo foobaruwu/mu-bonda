@@ -1,6 +1,7 @@
 #include "kvstore.h"
 #include "lib.h"
 #include "uart.h"
+#include "multicore.h"
 
 //TODO:minimize uart puts
 
@@ -12,6 +13,30 @@ static hash_entry_t memory_pool[MEMORY_POOL_SIZE];
 
 static int free_list_head = -1;
 static int next_free_entry = 0;
+
+typedef struct {
+    volatile int lock;
+} spinlock_t;
+
+void spinlock_init(spinlock_t *lock);
+void spinlock_acquire(spinlock_t *lock);
+void spinlock_release(spinlock_t *lock);
+
+static spinlock_t hash_lock;
+
+void spinlock_init(spinlock_t *lock) {
+    lock->lock = 0;
+}
+
+void spinlock_acquire(spinlock_t *lock) {
+    while (__atomic_test_and_set(&lock->lock, __ATOMIC_ACQUIRE)) {
+        // Wait
+    }
+}
+
+void spinlock_release(spinlock_t *lock) {
+    __atomic_clear(&lock->lock, __ATOMIC_RELEASE);
+}
 
 static uint32_t hash_function(uint32_t key) {
   //hmm modulo seems to be very expensive
@@ -55,6 +80,7 @@ static void memory_pool_free(hash_entry_t* entry) {
 
 void kv_init(void) { 
     kv_index = 0; 
+    spinlock_init(&hash_lock);
     
     for (int i = 0; i < HASH_TABLE_SIZE; i++) {
         hash_table[i] = 0;
@@ -80,12 +106,14 @@ int kv_put(uint32_t key, uint32_t value, uint32_t is_signed) {
 
     uint32_t hash = hash_function(key);
     
+    spinlock_acquire(&hash_lock);
     hash_entry_t* prev = 0;
     hash_entry_t* current = hash_table[hash];
     
     while (current) {
         if (current->key == key) {
             current->log_index = new_index;
+            spinlock_release(&hash_lock);
             return 0;
         }
         prev = current;
@@ -94,6 +122,7 @@ int kv_put(uint32_t key, uint32_t value, uint32_t is_signed) {
     
     hash_entry_t* new_entry = memory_pool_alloc();
     if (!new_entry) {
+        spinlock_release(&hash_lock);
         return -1;
         // this could lead to issues where we run out of space, so maybe compaction can be the remedy
     }
@@ -102,6 +131,7 @@ int kv_put(uint32_t key, uint32_t value, uint32_t is_signed) {
     new_entry->log_index = new_index;
     new_entry->next = hash_table[hash];
     hash_table[hash] = new_entry;
+    spinlock_release(&hash_lock);
 
     return 0;
 }
@@ -110,21 +140,26 @@ int kv_get(uint32_t key, uint32_t *value, uint32_t *is_signed) {
     // hash table implemented because who dosent like O(1)
     //Ill add comments later
     uint32_t hash = hash_function(key);
+    spinlock_acquire(&hash_lock);
     hash_entry_t* entry = hash_table[hash];
     
     while (entry) {
         if (entry->key == key) {
             kv_entry_t log_entry = kv_log[entry->log_index];
-            if (log_entry.is_tombstone)
+            if (log_entry.is_tombstone) {
+                spinlock_release(&hash_lock);
                 return -1;  
+            }
                 
             *value = log_entry.value;
             *is_signed = log_entry.is_signed;
+            spinlock_release(&hash_lock);
             return 0;
         }
         entry = entry->next;
     }
     
+    spinlock_release(&hash_lock);
     return -1; 
 }
 
@@ -134,6 +169,7 @@ int kv_delete(uint32_t key) {
     }
     
     uint32_t hash = hash_function(key);
+    spinlock_acquire(&hash_lock);
     hash_entry_t* entry = hash_table[hash];
     hash_entry_t* prev = 0;
     
@@ -156,6 +192,7 @@ int kv_delete(uint32_t key) {
     }
     
     if (!found) {
+        spinlock_release(&hash_lock);
         return -1;  
     }
     
@@ -165,6 +202,7 @@ int kv_delete(uint32_t key) {
         .key = key,
         .value = 0,
     };
+    spinlock_release(&hash_lock);
 
     return 0;
 }
@@ -232,4 +270,58 @@ int kv_print_log(int count) {
     uart_puts(" total entries\r\n");
 
     return 0;
+}
+
+typedef struct {
+    uint32_t key_start;
+    uint32_t key_end;
+    uint32_t result_count;
+} parallel_scan_args_t;
+
+void parallel_scan_task(void* arg) {
+    parallel_scan_args_t* scan_args = (parallel_scan_args_t*)arg;
+    uint32_t count = 0;
+    
+    // Scan a portion of the hash table
+    for (uint32_t i = scan_args->key_start; i < scan_args->key_end; i++) {
+        hash_entry_t* entry = hash_table[i];
+        while (entry) {
+            if (kv_log[entry->log_index].is_tombstone == 0) {
+                count++;
+            }
+            entry = entry->next;
+        }
+    }
+    
+    scan_args->result_count = count;
+}
+
+uint32_t kv_count_parallel(void) {
+    uint32_t total = 0;
+    parallel_scan_args_t args[MAX_CORES-1];
+    uint32_t chunk_size = HASH_TABLE_SIZE / MAX_CORES;
+    
+    for (int i = 1; i < MAX_CORES; i++) {
+        args[i-1].key_start = (i-1) * chunk_size;
+        args[i-1].key_end = (i == MAX_CORES-1) ? HASH_TABLE_SIZE : i * chunk_size;
+        args[i-1].result_count = 0;
+        core_execute_task(i, parallel_scan_task, &args[i-1]);
+    }
+    
+    for (uint32_t i = (MAX_CORES-1) * chunk_size; i < HASH_TABLE_SIZE; i++) {
+        hash_entry_t* entry = hash_table[i];
+        while (entry) {
+            if (kv_log[entry->log_index].is_tombstone == 0) {
+                total++;
+            }
+            entry = entry->next;
+        }
+    }
+    
+    for (int i = 1; i < MAX_CORES; i++) {
+        core_wait_for_completion(i);
+        total += args[i-1].result_count;
+    }
+    
+    return total;
 }
